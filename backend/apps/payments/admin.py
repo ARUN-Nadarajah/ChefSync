@@ -34,12 +34,12 @@ class PaymentAdmin(admin.ModelAdmin):
 
 @admin.register(Refund)
 class RefundAdmin(admin.ModelAdmin):
-    list_display = ['refund_id', 'payment', 'amount', 'status', 'reason', 'requested_at']
-    list_filter = ['status', 'reason', 'requested_at', 'processed_at']
-    search_fields = ['refund_id', 'payment__payment_id', 'payment__order__order_id', 'reason']
-    readonly_fields = ['refund_id', 'requested_at', 'processed_at']
-    date_hierarchy = 'requested_at'
-    ordering = ['-requested_at']
+    list_display = ['refund_id', 'payment', 'amount', 'status', 'reason', 'created_at']
+    list_filter = ['status', 'reason', 'created_at']
+    search_fields = ['refund_id', 'payment__payment_id', 'payment__order__order_number', 'reason']
+    readonly_fields = ['refund_id', 'created_at']
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
     
     actions = ['approve_refunds', 'reject_refunds', 'process_refunds']
     
@@ -64,19 +64,19 @@ class RefundAdmin(admin.ModelAdmin):
 
 @admin.register(PaymentMethod)
 class PaymentMethodAdmin(admin.ModelAdmin):
-    list_display = ['method_name', 'is_active', 'processing_fee', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['method_name', 'description']
+    list_display = ['user', 'method_type', 'card_brand', 'card_last_four', 'is_default', 'is_active', 'created_at']
+    list_filter = ['method_type', 'card_brand', 'is_default', 'is_active', 'created_at']
+    search_fields = ['user__username', 'user__email', 'card_last_four', 'card_brand']
     list_editable = ['is_active']
     readonly_fields = ['created_at', 'updated_at']
-    ordering = ['method_name']
+    ordering = ['-is_default', '-created_at']
 
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ['transaction_id', 'user', 'transaction_type', 'amount', 'status', 'created_at']
+    list_display = ['transaction_id', 'payment', 'transaction_type', 'amount', 'status', 'created_at']
     list_filter = ['transaction_type', 'status', 'created_at']
-    search_fields = ['transaction_id', 'user__username', 'user__email', 'description']
+    search_fields = ['transaction_id', 'payment__payment_id', 'payment__order__order_number', 'description']
     readonly_fields = ['transaction_id', 'created_at']
     date_hierarchy = 'created_at'
     ordering = ['-created_at']
@@ -94,4 +94,4 @@ class TransactionAdmin(admin.ModelAdmin):
     mark_failed.short_description = "Mark selected transactions as failed"
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('user')
+        return super().get_queryset(request).select_related('payment')

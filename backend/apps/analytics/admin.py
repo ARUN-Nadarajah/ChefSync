@@ -4,22 +4,22 @@ from .models import SystemSettings, UserRole, SystemMaintenance, SystemNotificat
 
 @admin.register(SystemSettings)
 class SystemSettingsAdmin(admin.ModelAdmin):
-    list_display = ['key', 'value', 'setting_type', 'category', 'is_active', 'updated_at']
-    list_filter = ['setting_type', 'category', 'is_active', 'updated_at']
+    list_display = ['key', 'value', 'setting_type', 'is_active', 'updated_at']
+    list_filter = ['setting_type', 'is_active', 'updated_at']
     search_fields = ['key', 'value', 'description']
     list_editable = ['is_active']
     readonly_fields = ['created_at', 'updated_at']
-    ordering = ['category', 'key']
+    ordering = ['setting_type', 'key']
 
 
 @admin.register(UserRole)
 class UserRoleAdmin(admin.ModelAdmin):
-    list_display = ['role_name', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['role_name', 'description']
+    list_display = ['name', 'role_type', 'is_active', 'created_at']
+    list_filter = ['role_type', 'is_active', 'created_at']
+    search_fields = ['name', 'description']
     list_editable = ['is_active']
     readonly_fields = ['created_at', 'updated_at']
-    ordering = ['role_name']
+    ordering = ['name']
 
 
 @admin.register(SystemMaintenance)
