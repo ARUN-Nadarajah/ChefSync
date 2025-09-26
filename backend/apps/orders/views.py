@@ -973,93 +973,114 @@ def chef_recent_activity(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def calculate_checkout(request):
-    """Calculate delivery fee, tax, and total for checkout"""
+    """Calculate delivery fee, tax, and total for checkout with comprehensive validation"""
     try:
-        # Get cart items
-        cart_items = CartItem.objects.filter(customer=request.user)
-        if not cart_items.exists():
-            return Response({'error': 'Cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
+        # Import validation serializers and mixins
+        from .serializers import (
+            CheckoutValidationSerializer, 
+            CartValidationMixin, 
+            BusinessRuleValidationMixin,
+            DataIntegrityValidationMixin
+        )
+        
+        # Validate input data
+        validation_serializer = CheckoutValidationSerializer(data=request.data)
+        if not validation_serializer.is_valid():
+            return Response({
+                'error': 'Validation failed',
+                'details': validation_serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = validation_serializer.validated_data
+        chef_id = validated_data['chef_id']
+        delivery_lat = validated_data['delivery_latitude']
+        delivery_lng = validated_data['delivery_longitude']
+        
+        # Initialize validation mixins
+        cart_validator = CartValidationMixin()
+        business_validator = BusinessRuleValidationMixin()
+        data_validator = DataIntegrityValidationMixin()
+        
+        # Validate cart
+        try:
+            cart_items = cart_validator.validate_cart_not_empty(request.user)
+            cart_validator.validate_cart_consistency(cart_items, chef_id)
+            cart_validator.validate_cart_item_availability(cart_items)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
         # Calculate subtotal
         subtotal = sum(item.total_price for item in cart_items)
         
-        # Get delivery address coordinates
-        delivery_lat = request.data.get('delivery_latitude')
-        delivery_lng = request.data.get('delivery_longitude')
+        # Validate minimum order amount
+        try:
+            data_validator.validate_minimum_order_amount(subtotal)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-        if not delivery_lat or not delivery_lng:
-            return Response({'error': 'Delivery coordinates required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get chef location (assuming single chef for now)
-        chef_id = request.data.get('chef_id')
-        # Fallback: derive chef_id from first cart item's price.cook
-        if not chef_id:
-            first_item = cart_items.first()
-            if first_item and getattr(first_item.price, 'cook_id', None):
-                chef_id = first_item.price.cook.user_id
-            else:
-                return Response({'error': 'Chef ID required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+        # Get chef and validate availability
         try:
             chef = User.objects.get(user_id=chef_id)
-            # Resolve chef location with fallback to request-provided coordinates
-            chef_lat, chef_lng = _resolve_chef_location(chef, request.data)
-            if chef_lat is None or chef_lng is None:
-                return Response({'error': 'Chef location not available'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Calculate distance using Haversine formula
-            def haversine_distance(lat1, lon1, lat2, lon2):
-                R = 6371  # Earth's radius in kilometers
-                lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-                dlat = lat2 - lat1
-                dlon = lon2 - lon1
-                a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-                c = 2 * math.asin(math.sqrt(a))
-                return R * c
-            
-            # Compute distance
-            distance_km = haversine_distance(float(chef_lat), float(chef_lng), float(delivery_lat), float(delivery_lng))
-            
-            # Validate distance to avoid DB out-of-range and unrealistic deliveries
-            MAX_DELIVERY_KM = 50.0  # business rule: serviceable radius
-            if math.isnan(distance_km) or distance_km <= 0:
-                return Response({'error': 'Invalid distance calculation. Please verify addresses.'}, status=status.HTTP_400_BAD_REQUEST)
-            if distance_km > MAX_DELIVERY_KM:
-                return Response({
-                    'error': f'Delivery distance {round(distance_km, 2)} km is out of service range (max {int(MAX_DELIVERY_KM)} km).'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            # Calculate delivery fee
-            from decimal import Decimal, ROUND_HALF_UP
-            
-            if distance_km <= 5.0:
-                delivery_fee = Decimal('50.00')
-            else:
-                extra_km = math.ceil(distance_km - 5.0)
-                delivery_fee = Decimal('50.00') + (Decimal(extra_km) * Decimal('15.00'))
-            
-            # Calculate tax (10%)
-            tax_amount = (Decimal(subtotal) * Decimal('0.10')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-            
-            # Calculate total
-            total_amount = Decimal(subtotal) + tax_amount + delivery_fee
-            
-            return Response({
-                'subtotal': float(subtotal),
-                'tax_amount': float(tax_amount),
-                'delivery_fee': float(delivery_fee),
-                'distance_km': float(Decimal(distance_km).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
-                'total_amount': float(total_amount),
-                'breakdown': {
-                    'base_delivery_fee': 50.00,
-                    'extra_km': max(0, math.ceil(distance_km - 5.0)),
-                    'extra_km_rate': 15.00,
-                    'extra_km_fee': max(0, math.ceil(distance_km - 5.0) * 15.00)
-                }
-            })
-            
+            business_validator.validate_chef_availability(chef)
         except User.DoesNotExist:
-            return Response({'error': 'Chef not found'}, status=status.HTTP_404_NOT_FOUND)
-            
+            return Response({'error': 'Chef not found'}, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Resolve chef location
+        chef_lat, chef_lng = _resolve_chef_location(chef, request.data)
+        if chef_lat is None or chef_lng is None:
+            return Response({'error': 'Chef location not available'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate delivery distance
+        try:
+            distance_km = business_validator.validate_delivery_distance(
+                chef_lat, chef_lng, delivery_lat, delivery_lng
+            )
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate pricing consistency
+        try:
+            data_validator.validate_pricing_consistency(cart_items)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Calculate delivery fee
+        from decimal import Decimal, ROUND_HALF_UP
+        
+        if distance_km <= 5.0:
+            delivery_fee = Decimal('250.00')  # Base delivery fee in LKR
+        else:
+            extra_km = math.ceil(distance_km - 5.0)
+            delivery_fee = Decimal('250.00') + (Decimal(extra_km) * Decimal('75.00'))  # LKR 75 per extra km
+        
+        # Calculate tax (10%)
+        tax_amount = (Decimal(subtotal) * Decimal('0.10')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        # Calculate total
+        total_amount = Decimal(subtotal) + tax_amount + delivery_fee
+        
+        # Validate maximum order amount
+        try:
+            data_validator.validate_maximum_order_amount(total_amount)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            'subtotal': float(subtotal),
+            'tax_amount': float(tax_amount),
+            'delivery_fee': float(delivery_fee),
+            'distance_km': float(Decimal(distance_km).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+            'total_amount': float(total_amount),
+            'breakdown': {
+                'base_delivery_fee': 250.00,
+                'extra_km': max(0, math.ceil(distance_km - 5.0)),
+                'extra_km_rate': 75.00,
+                'extra_km_fee': max(0, math.ceil(distance_km - 5.0) * 75.00)
+            }
+        })
+        
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -1067,59 +1088,96 @@ def calculate_checkout(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def place_order(request):
-    """Place an order from cart"""
+    """Place an order from cart with comprehensive validation"""
     try:
-        print(f"Place order request data: {request.data}")
-        print(f"User: {request.user}")
-        print(f"User authenticated: {request.user.is_authenticated}")
-        print(f"User ID: {request.user.pk if request.user.is_authenticated else 'None'}")
-        print(f"User user_id: {request.user.user_id if hasattr(request.user, 'user_id') and request.user.is_authenticated else 'None'}")
+        # Import validation serializers and mixins
+        from .serializers import (
+            PlaceOrderValidationSerializer, 
+            CartValidationMixin, 
+            BusinessRuleValidationMixin,
+            DataIntegrityValidationMixin
+        )
         
-        if not request.user or not request.user.is_authenticated or request.user.is_anonymous:
-            print(f"User not authenticated: user={request.user}, authenticated={request.user.is_authenticated if request.user else 'N/A'}")
-            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        # Validate input data
+        validation_serializer = PlaceOrderValidationSerializer(data=request.data)
+        if not validation_serializer.is_valid():
+            return Response({
+                'error': 'Validation failed',
+                'details': validation_serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Get cart items
-        cart_items = CartItem.objects.filter(customer=request.user)
-        print(f"Cart items count: {cart_items.count()}")
+        validated_data = validation_serializer.validated_data
+        chef_id = validated_data['chef_id']
+        delivery_lat = validated_data['delivery_latitude']
+        delivery_lng = validated_data['delivery_longitude']
+        delivery_address_id = validated_data.get('delivery_address_id')
+        promo_code = validated_data.get('promo_code')
+        customer_notes = validated_data.get('customer_notes', '')
+        payment_method = validated_data.get('payment_method', 'cash')
         
-        if not cart_items.exists():
-            return Response({'error': 'Cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
+        # Initialize validation mixins
+        cart_validator = CartValidationMixin()
+        business_validator = BusinessRuleValidationMixin()
+        data_validator = DataIntegrityValidationMixin()
         
-        # Get order data
-        chef_id = request.data.get('chef_id')
-        delivery_address_id = request.data.get('delivery_address_id')
-        delivery_lat = request.data.get('delivery_latitude')
-        delivery_lng = request.data.get('delivery_longitude')
-        promo_code = request.data.get('promo_code')
-        customer_notes = request.data.get('customer_notes', '')
+        # Validate cart
+        try:
+            cart_items = cart_validator.validate_cart_not_empty(request.user)
+            cart_validator.validate_cart_consistency(cart_items, chef_id)
+            cart_validator.validate_cart_item_availability(cart_items)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Fallback: derive chef_id from cart if not provided
-        if not chef_id:
-            first_item = cart_items.first()
-            if first_item and getattr(first_item.price, 'cook_id', None):
-                chef_id = first_item.price.cook.user_id
-            else:
-                return Response({'error': 'Chef ID required'}, status=status.HTTP_400_BAD_REQUEST)
+        # Calculate subtotal
+        subtotal = sum(item.total_price for item in cart_items)
         
-        # Get chef
-        print(f"Looking for chef with ID: {chef_id}")
+        # Validate minimum order amount
+        try:
+            data_validator.validate_minimum_order_amount(subtotal)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get chef and validate availability
         try:
             chef = User.objects.get(user_id=chef_id)
-            print(f"Found chef: {chef.username}")
+            business_validator.validate_chef_availability(chef)
         except User.DoesNotExist:
-            print(f"Chef with ID {chef_id} not found")
-            return Response({'error': 'Chef not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Chef not found'}, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Get delivery address
+        # Validate order timing
+        try:
+            business_validator.validate_order_timing()
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Resolve chef location
+        chef_lat, chef_lng = _resolve_chef_location(chef, request.data)
+        if chef_lat is None or chef_lng is None:
+            return Response({'error': 'Chef location not available'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate delivery distance
+        try:
+            distance_km = business_validator.validate_delivery_distance(
+                chef_lat, chef_lng, delivery_lat, delivery_lng
+            )
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate pricing consistency
+        try:
+            data_validator.validate_pricing_consistency(cart_items)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate delivery address if provided
         delivery_address = None
-        if delivery_address_id and delivery_address_id != 0:
+        if delivery_address_id:
             try:
                 delivery_address = UserAddress.objects.get(id=delivery_address_id, user=request.user)
-                delivery_lat = float(delivery_address.latitude)
-                delivery_lng = float(delivery_address.longitude)
             except UserAddress.DoesNotExist:
-                return Response({'error': 'Address not found'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': 'Delivery address not found or does not belong to you'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             # Create a new delivery address from coordinates
             address_text = request.data.get('delivery_address', f'Lat: {delivery_lat}, Lng: {delivery_lng}')
@@ -1132,59 +1190,34 @@ def place_order(request):
                 longitude=delivery_lng,
                 is_default=False
             )
-            print(f"Created new delivery address: {delivery_address}")
         
-        if not delivery_lat or not delivery_lng:
-            return Response({'error': 'Delivery coordinates required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Calculate totals (reuse calculation logic)
-        subtotal = sum(item.total_price for item in cart_items)
-        
-        # Get chef location and calculate distance (with resolution/persist fallback)
-        chef_lat, chef_lng = _resolve_chef_location(chef, request.data)
-        if chef_lat is None or chef_lng is None:
-            return Response({'error': 'Chef location not available'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Calculate distance and fees
-        def haversine_distance(lat1, lon1, lat2, lon2):
-            R = 6371
-            lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-            dlat = lat2 - lat1
-            dlon = lon2 - lon1
-            a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-            c = 2 * math.asin(math.sqrt(a))
-            return R * c
-        
-        distance_km = haversine_distance(
-            float(chef_lat), float(chef_lng),
-            float(delivery_lat), float(delivery_lng)
-        )
-        # Validate distance to avoid DB out-of-range and unrealistic deliveries
-        MAX_DELIVERY_KM = 50.0  # business rule: serviceable radius
-        if math.isnan(distance_km) or distance_km <= 0:
-            return Response({'error': 'Invalid distance calculation. Please verify addresses.'}, status=status.HTTP_400_BAD_REQUEST)
-        if distance_km > MAX_DELIVERY_KM:
-            return Response({
-                'error': f'Delivery distance {round(distance_km, 2)} km is out of service range (max {int(MAX_DELIVERY_KM)} km).'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
+        # Calculate delivery fee and tax
         from decimal import Decimal, ROUND_HALF_UP
         
         if distance_km <= 5.0:
-            delivery_fee = Decimal('50.00')
+            delivery_fee = Decimal('250.00')  # Base delivery fee in LKR
         else:
             extra_km = math.ceil(distance_km - 5.0)
-            delivery_fee = Decimal('50.00') + (Decimal(extra_km) * Decimal('15.00'))
+            delivery_fee = Decimal('250.00') + (Decimal(extra_km) * Decimal('75.00'))  # LKR 75 per extra km
         
+        # Calculate tax (10%)
         tax_amount = (Decimal(subtotal) * Decimal('0.10')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        # Calculate total amount
         total_amount = Decimal(subtotal) + tax_amount + delivery_fee
+        
+        # Validate maximum order amount
+        try:
+            data_validator.validate_maximum_order_amount(total_amount)
+        except serializers.ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
         # Create order
         order = Order.objects.create(
             customer=request.user,
             chef=chef,
             status='pending',
-            payment_method='cash',
+            payment_method=payment_method,
             subtotal=subtotal,
             tax_amount=tax_amount,
             delivery_fee=delivery_fee,

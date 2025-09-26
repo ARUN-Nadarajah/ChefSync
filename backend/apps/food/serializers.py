@@ -224,29 +224,266 @@ class ChefFoodPriceSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class ChefFoodCreateSerializer(serializers.ModelSerializer):
-    """Serializer for chefs to create new food items"""
+# ===== FOOD VALIDATION SERIALIZERS =====
+
+class FoodValidationMixin:
+    """Mixin for food-related validations"""
+    
+    def validate_food_name(self, name):
+        """Validate food name format and uniqueness"""
+        if not name or not name.strip():
+            raise serializers.ValidationError("Food name is required")
+        
+        name = name.strip()
+        if len(name) < 3:
+            raise serializers.ValidationError("Food name must be at least 3 characters long")
+        
+        if len(name) > 100:
+            raise serializers.ValidationError("Food name cannot exceed 100 characters")
+        
+        # Check for duplicate names by the same chef
+        if hasattr(self, 'context') and 'request' in self.context:
+            user = self.context['request'].user
+            existing_food = Food.objects.filter(
+                name__iexact=name, 
+                chef=user
+            ).exclude(
+                pk=getattr(self.instance, 'pk', None)
+            ).first()
+            
+            if existing_food:
+                raise serializers.ValidationError(
+                    f"You already have a food item named '{name}'. Please choose a different name."
+                )
+        
+        return name
+    
+    def validate_ingredients(self, ingredients):
+        """Validate ingredients list"""
+        if ingredients is None:
+            return []
+        
+        if isinstance(ingredients, str):
+            ingredients = ingredients.strip()
+            if ingredients:
+                try:
+                    import json
+                    parsed = json.loads(ingredients)
+                    if isinstance(parsed, list):
+                        ingredients = [str(item).strip() for item in parsed if str(item).strip()]
+                    else:
+                        ingredients = [str(parsed).strip()] if str(parsed).strip() else []
+                except (json.JSONDecodeError, ValueError):
+                    ingredients = [item.strip() for item in ingredients.split(',') if item.strip()]
+            else:
+                ingredients = []
+        
+        if not isinstance(ingredients, list):
+            ingredients = []
+        
+        # Validate each ingredient
+        validated_ingredients = []
+        for ingredient in ingredients:
+            if isinstance(ingredient, str) and ingredient.strip():
+                ingredient = ingredient.strip()
+                if len(ingredient) > 100:
+                    raise serializers.ValidationError(f"Ingredient '{ingredient[:50]}...' is too long (max 100 characters)")
+                validated_ingredients.append(ingredient)
+        
+        if len(validated_ingredients) > 20:
+            raise serializers.ValidationError("Maximum 20 ingredients allowed")
+        
+        return validated_ingredients
+    
+    def validate_allergens(self, allergens):
+        """Validate allergens list"""
+        if allergens is None:
+            return []
+        
+        if isinstance(allergens, str):
+            allergens = allergens.strip()
+            if allergens:
+                allergens = [item.strip() for item in allergens.split(',') if item.strip()]
+            else:
+                allergens = []
+        
+        if not isinstance(allergens, list):
+            allergens = []
+        
+        # Validate each allergen
+        validated_allergens = []
+        for allergen in allergens:
+            if isinstance(allergen, str) and allergen.strip():
+                allergen = allergen.strip()
+                if len(allergen) > 50:
+                    raise serializers.ValidationError(f"Allergen '{allergen[:30]}...' is too long (max 50 characters)")
+                validated_allergens.append(allergen)
+        
+        if len(validated_allergens) > 10:
+            raise serializers.ValidationError("Maximum 10 allergens allowed")
+        
+        return validated_allergens
+    
+    def validate_price(self, price):
+        """Validate price range in LKR (Sri Lankan Rupees)"""
+        if price is None:
+            raise serializers.ValidationError("Price is required")
+        
+        try:
+            price = float(price)
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Price must be a valid number")
+        
+        if price <= 0:
+            raise serializers.ValidationError("Price must be greater than 0")
+        
+        if price < 50.00:
+            raise serializers.ValidationError("Minimum price is LKR 50.00")
+        
+        if price > 50000.00:
+            raise serializers.ValidationError("Maximum price is LKR 50,000.00")
+        
+        return price
+    
+    def validate_preparation_time(self, time):
+        """Validate preparation time"""
+        if time is None:
+            return 15  # Default
+        
+        try:
+            time = int(time)
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Preparation time must be a valid integer")
+        
+        if time < 5:
+            raise serializers.ValidationError("Minimum preparation time is 5 minutes")
+        
+        if time > 180:
+            raise serializers.ValidationError("Maximum preparation time is 180 minutes (3 hours)")
+        
+        return time
+    
+    def validate_spice_level(self, level):
+        """Validate spice level"""
+        if level is None or level == '':
+            return None
+        
+        valid_levels = ['mild', 'medium', 'hot', 'very_hot']
+        if level not in valid_levels:
+            raise serializers.ValidationError(f"Spice level must be one of: {', '.join(valid_levels)}")
+        
+        return level
+    
+    def validate_dietary_restrictions(self, data):
+        """Validate dietary restriction combinations"""
+        is_vegetarian = data.get('is_vegetarian', False)
+        is_vegan = data.get('is_vegan', False)
+        
+        # Vegan implies vegetarian
+        if is_vegan and not is_vegetarian:
+            data['is_vegetarian'] = True
+        
+        return data
+
+
+class ImageValidationMixin:
+    """Mixin for image validation"""
+    
+    def validate_image(self, image):
+        """Validate image file"""
+        if image is None:
+            return None
+        
+        # Check file size (max 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if hasattr(image, 'size') and image.size > max_size:
+            raise serializers.ValidationError("Image file size cannot exceed 10MB")
+        
+        # Check file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        if hasattr(image, 'content_type') and image.content_type not in allowed_types:
+            raise serializers.ValidationError(
+                f"Image must be one of: {', '.join(allowed_types)}. Got: {image.content_type}"
+            )
+        
+        # Check file extension
+        if hasattr(image, 'name'):
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.webp']
+            file_extension = '.' + image.name.split('.')[-1].lower()
+            if file_extension not in allowed_extensions:
+                raise serializers.ValidationError(
+                    f"Image must have one of these extensions: {', '.join(allowed_extensions)}"
+                )
+        
+        return image
+
+
+class ChefFoodCreateSerializer(serializers.ModelSerializer, FoodValidationMixin, ImageValidationMixin):
+    """Enhanced serializer for chefs to create new food items with comprehensive validation"""
+    
     # Price fields for the initial price entry
-    price = serializers.DecimalField(max_digits=10, decimal_places=2, write_only=True)
-    size = serializers.CharField(max_length=10, write_only=True, default='Medium')
-    preparation_time = serializers.IntegerField(write_only=True, default=15)
+    price = serializers.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        write_only=True,
+        help_text="Price must be between LKR 50.00 and LKR 50,000.00"
+    )
+    size = serializers.ChoiceField(
+        choices=[('Small', 'Small'), ('Medium', 'Medium'), ('Large', 'Large')],
+        write_only=True, 
+        default='Medium',
+        help_text="Size of the food item"
+    )
+    preparation_time = serializers.IntegerField(
+        write_only=True, 
+        default=15,
+        help_text="Preparation time in minutes (5-180)"
+    )
     # Custom image field that accepts files
-    image = serializers.FileField(required=False, allow_null=True, write_only=True)
+    image = serializers.FileField(
+        required=False, 
+        allow_null=True, 
+        write_only=True,
+        help_text="Food image (max 10MB, formats: JPG, PNG, WebP)"
+    )
     
     class Meta:
         model = Food
         fields = [
             'name', 'description', 'category', 'image', 'ingredients', 
-            'is_vegetarian', 'is_vegan', 'spice_level', 'is_available',
+            'is_vegetarian', 'is_vegan', 'is_gluten_free', 'spice_level', 'is_available',
             'price', 'size', 'preparation_time'
         ]
     
+    def validate_name(self, value):
+        """Validate food name with comprehensive checks"""
+        return self.validate_food_name(value)
+    
+    def validate_price(self, value):
+        """Validate price with comprehensive checks"""
+        return self.validate_price(value)
+    
+    def validate_preparation_time(self, value):
+        """Validate preparation time with comprehensive checks"""
+        return self.validate_preparation_time(value)
+    
+    def validate_spice_level(self, value):
+        """Validate spice level with comprehensive checks"""
+        return self.validate_spice_level(value)
+    
+    def validate_ingredients(self, value):
+        """Validate ingredients with comprehensive checks"""
+        return self.validate_ingredients(value)
+    
     def validate_image(self, value):
-        """Validate and process image upload"""
+        """Validate and process image upload with comprehensive checks"""
         if value:
-            print(f"DEBUG: Image file received in validate_image: {value.name}, size: {value.size}")
-            # Use the same image upload handler
-            return self._handle_image_upload(value, "new_food")
+            # Apply image validation from mixin
+            validated_image = super().validate_image(value)
+            if validated_image:
+                print(f"DEBUG: Image file validated: {validated_image.name}, size: {validated_image.size}")
+                # Use the same image upload handler
+                return self._handle_image_upload(validated_image, "new_food")
         return None
 
     def _handle_image_upload(self, image_data, food_name):
@@ -285,9 +522,26 @@ class ChefFoodCreateSerializer(serializers.ModelSerializer):
             return None
     
     def validate(self, data):
-        """Add debug logging for all validation data"""
+        """Comprehensive validation for food creation"""
         print(f"DEBUG: Full validation data received: {data}")
         print(f"DEBUG: Data types: {[(k, type(v)) for k, v in data.items()]}")
+        
+        # Validate dietary restrictions
+        data = self.validate_dietary_restrictions(data)
+        
+        # Validate description length
+        if 'description' in data and data['description']:
+            description = data['description'].strip()
+            if len(description) > 1000:
+                raise serializers.ValidationError("Description cannot exceed 1000 characters")
+            data['description'] = description
+        
+        # Validate category
+        if 'category' in data and data['category']:
+            category = data['category'].strip()
+            if len(category) > 50:
+                raise serializers.ValidationError("Category cannot exceed 50 characters")
+            data['category'] = category
         
         # Ensure ingredients is properly processed
         if 'ingredients' in data:
@@ -316,47 +570,129 @@ class ChefFoodCreateSerializer(serializers.ModelSerializer):
             
             print(f"DEBUG: Final processed ingredients: {data['ingredients']} (type: {type(data['ingredients'])})")
         
+        # Validate business rules
+        self._validate_business_rules(data)
+        
         return data
     
+    def _validate_business_rules(self, data):
+        """Validate business rules for food creation"""
+        # Check if chef has reached maximum food items limit
+        if hasattr(self, 'context') and 'request' in self.context:
+            user = self.context['request'].user
+            MAX_FOOD_ITEMS = 50  # Business rule: max 50 food items per chef
+            
+            existing_count = Food.objects.filter(chef=user).count()
+            if existing_count >= MAX_FOOD_ITEMS:
+                raise serializers.ValidationError(
+                    f"You have reached the maximum limit of {MAX_FOOD_ITEMS} food items. "
+                    "Please contact support to increase your limit."
+                )
+        
+        # Validate price consistency with preparation time
+        price = data.get('price')
+        prep_time = data.get('preparation_time', 15)
+        
+        if price and prep_time:
+            # Basic validation: higher price should generally have longer prep time
+            if price > 2500 and prep_time < 10:
+                raise serializers.ValidationError(
+                    "High-priced items should have adequate preparation time (minimum 10 minutes for items over LKR 2,500)"
+                )
+        
+        # Validate dietary restriction combinations
+        is_vegetarian = data.get('is_vegetarian', False)
+        is_vegan = data.get('is_vegan', False)
+        is_gluten_free = data.get('is_gluten_free', False)
+        
+        # If vegan, must be vegetarian
+        if is_vegan and not is_vegetarian:
+            data['is_vegetarian'] = True
+        
+        # Validate spice level with dietary restrictions
+        spice_level = data.get('spice_level')
+        if spice_level == 'very_hot' and is_vegan:
+            # Warning: very hot vegan food might be unusual
+            pass  # Allow but could add warning
+    
     def create(self, validated_data):
+        """Create food item with comprehensive validation and error handling"""
         # Debug logging to see what ingredients we received
         print(f"DEBUG: Creating food with validated_data ingredients: {validated_data.get('ingredients')}")
         print(f"DEBUG: Ingredients type: {type(validated_data.get('ingredients'))}")
         print(f"DEBUG: Image in validated_data: {validated_data.get('image')}")
         
-        # Extract price data
-        price = validated_data.pop('price')
-        size = validated_data.pop('size', 'Medium')
-        prep_time = validated_data.pop('preparation_time', 15)
+        try:
+            # Extract price data
+            price = validated_data.pop('price')
+            size = validated_data.pop('size', 'Medium')
+            prep_time = validated_data.pop('preparation_time', 15)
+            
+            # Handle image - it should be a Cloudinary URL now from validate_image
+            image_url = validated_data.pop('image', None)
+            
+            # Set status to pending and assign chef
+            validated_data['status'] = 'Pending'
+            validated_data['chef'] = self.context['request'].user
+            
+            # Set the image URL if we have one
+            if image_url:
+                validated_data['image'] = image_url
+            
+            # Ensure ingredients is properly formatted
+            if 'ingredients' not in validated_data:
+                validated_data['ingredients'] = []
+            
+            # Final validation before creation
+            self._final_validation_before_create(validated_data, price, size, prep_time)
+            
+            # Create food item
+            food = super().create(validated_data)
+            
+            # Create initial price entry
+            FoodPrice.objects.create(
+                food=food,
+                size=size,
+                price=price,
+                preparation_time=prep_time,
+                cook=self.context['request'].user
+            )
+            
+            print(f"DEBUG: Successfully created food item: {food.name} (ID: {food.food_id})")
+            return food
+            
+        except Exception as e:
+            print(f"ERROR: Failed to create food item: {str(e)}")
+            raise serializers.ValidationError(f"Failed to create food item: {str(e)}")
+    
+    def _final_validation_before_create(self, validated_data, price, size, prep_time):
+        """Final validation before creating the food item"""
+        # Validate that all required fields are present
+        required_fields = ['name', 'description', 'category']
+        for field in required_fields:
+            if not validated_data.get(field):
+                raise serializers.ValidationError(f"{field.title()} is required")
         
-        # Handle image - it should be a Cloudinary URL now from validate_image
-        image_url = validated_data.pop('image', None)
+        # Validate price and size combination
+        if price < 250 and size == 'Large':
+            raise serializers.ValidationError(
+                "Large size items should have a minimum price of LKR 250.00"
+            )
         
-        # Set status to pending and assign chef
-        validated_data['status'] = 'Pending'
-        validated_data['chef'] = self.context['request'].user
+        # Validate preparation time consistency
+        if prep_time < 5:
+            raise serializers.ValidationError(
+                "Preparation time must be at least 5 minutes"
+            )
         
-        # Set the image URL if we have one
-        if image_url:
-            validated_data['image'] = image_url
+        # Validate ingredients are not empty for certain categories
+        category = validated_data.get('category', '').lower()
+        ingredients = validated_data.get('ingredients', [])
         
-        # Ensure ingredients is properly formatted
-        if 'ingredients' not in validated_data:
-            validated_data['ingredients'] = []
-        
-        # Create food item
-        food = super().create(validated_data)
-        
-        # Create initial price entry
-        FoodPrice.objects.create(
-            food=food,
-            size=size,
-            price=price,
-            preparation_time=prep_time,
-            cook=self.context['request'].user
-        )
-        
-        return food
+        if category in ['main course', 'entree', 'dinner'] and not ingredients:
+            raise serializers.ValidationError(
+                "Main course items should include ingredients list"
+            )
 
 
 class FoodReviewSerializer(serializers.ModelSerializer):

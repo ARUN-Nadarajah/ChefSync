@@ -311,6 +311,226 @@ class BulkOrderActionSerializer(serializers.Serializer):
     notes = serializers.CharField(required=False, allow_blank=True)
 
 
+
+
+class CheckoutValidationSerializer(serializers.Serializer):
+    """Comprehensive validation for checkout process"""
+    
+    # Required fields
+    chef_id = serializers.IntegerField(required=True, help_text="Chef ID for the order")
+    delivery_latitude = serializers.DecimalField(
+        max_digits=10, 
+        decimal_places=8, 
+        required=True,
+        help_text="Delivery latitude coordinate"
+    )
+    delivery_longitude = serializers.DecimalField(
+        max_digits=11, 
+        decimal_places=8, 
+        required=True,
+        help_text="Delivery longitude coordinate"
+    )
+    
+    # Optional fields
+    delivery_address_id = serializers.IntegerField(required=False, allow_null=True)
+    promo_code = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
+    customer_notes = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    
+    def validate_chef_id(self, value):
+        """Validate chef exists and is active"""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        try:
+            chef = User.objects.get(user_id=value)
+            # Check if user is a chef/cook
+            if not hasattr(chef, 'cook') and not hasattr(chef, 'chefprofile'):
+                raise serializers.ValidationError("User is not a chef")
+            return value
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Chef not found")
+    
+    def validate_delivery_latitude(self, value):
+        """Validate latitude is within valid range"""
+        if not (-90 <= float(value) <= 90):
+            raise serializers.ValidationError("Latitude must be between -90 and 90 degrees")
+        return value
+    
+    def validate_delivery_longitude(self, value):
+        """Validate longitude is within valid range"""
+        if not (-180 <= float(value) <= 180):
+            raise serializers.ValidationError("Longitude must be between -180 and 180 degrees")
+        return value
+    
+    def validate_delivery_address_id(self, value):
+        """Validate delivery address exists and belongs to user"""
+        if value is not None:
+            try:
+                from .models import UserAddress
+                address = UserAddress.objects.get(id=value)
+                # Note: We can't validate user ownership here since we don't have request context
+                # This will be validated in the view
+                return value
+            except UserAddress.DoesNotExist:
+                raise serializers.ValidationError("Delivery address not found")
+        return value
+    
+    def validate_promo_code(self, value):
+        """Validate promo code format and existence"""
+        if value and value.strip():
+            # Basic format validation
+            if len(value.strip()) < 3:
+                raise serializers.ValidationError("Promo code must be at least 3 characters")
+            # Additional validation can be added here for promo code existence
+        return value
+    
+    def validate_customer_notes(self, value):
+        """Validate customer notes length and content"""
+        if value and len(value.strip()) > 500:
+            raise serializers.ValidationError("Customer notes cannot exceed 500 characters")
+        return value
+
+
+class PlaceOrderValidationSerializer(CheckoutValidationSerializer):
+    """Extended validation for place order endpoint"""
+    
+    # Additional validation for order placement
+    payment_method = serializers.ChoiceField(
+        choices=[('cash', 'Cash on Delivery')],
+        required=False,
+        default='cash'
+    )
+    
+    def validate_payment_method(self, value):
+        """Validate payment method is supported"""
+        if value not in ['cash']:
+            raise serializers.ValidationError("Only cash on delivery is currently supported")
+        return value
+
+
+class CartValidationMixin:
+    """Mixin for cart-related validations"""
+    
+    def validate_cart_not_empty(self, user):
+        """Validate cart is not empty"""
+        from .models import CartItem
+        cart_items = CartItem.objects.filter(customer=user)
+        if not cart_items.exists():
+            raise serializers.ValidationError("Cart is empty")
+        return cart_items
+    
+    def validate_cart_consistency(self, cart_items, chef_id):
+        """Validate all cart items belong to the same chef"""
+        for item in cart_items:
+            if not hasattr(item.price, 'cook') or not item.price.cook:
+                raise serializers.ValidationError(f"Cart item {item.id} has no associated chef")
+            if item.price.cook.user_id != chef_id:
+                raise serializers.ValidationError("All cart items must be from the same chef")
+        return True
+    
+    def validate_cart_item_availability(self, cart_items):
+        """Validate all cart items are still available"""
+        unavailable_items = []
+        for item in cart_items:
+            if not item.price.is_available:
+                unavailable_items.append(f"{item.price.food.name} ({item.price.size})")
+        
+        if unavailable_items:
+            raise serializers.ValidationError(
+                f"Some items are no longer available: {', '.join(unavailable_items)}"
+            )
+        return True
+
+
+class BusinessRuleValidationMixin:
+    """Mixin for business rule validations"""
+    
+    def validate_delivery_distance(self, chef_lat, chef_lng, delivery_lat, delivery_lng):
+        """Validate delivery distance is within service range"""
+        import math
+        
+        def haversine_distance(lat1, lon1, lat2, lon2):
+            R = 6371  # Earth's radius in kilometers
+            lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+            c = 2 * math.asin(math.sqrt(a))
+            return R * c
+        
+        distance_km = haversine_distance(
+            float(chef_lat), float(chef_lng), 
+            float(delivery_lat), float(delivery_lng)
+        )
+        
+        MAX_DELIVERY_KM = 50.0
+        if math.isnan(distance_km) or distance_km <= 0:
+            raise serializers.ValidationError("Invalid distance calculation. Please verify addresses.")
+        if distance_km > MAX_DELIVERY_KM:
+            raise serializers.ValidationError(
+                f"Delivery distance {round(distance_km, 2)} km is out of service range (max {int(MAX_DELIVERY_KM)} km)."
+            )
+        return distance_km
+    
+    def validate_chef_availability(self, chef):
+        """Validate chef is available for orders"""
+        # Check if chef profile exists and is active
+        try:
+            from apps.authentication.models import Cook
+            cook_profile = Cook.objects.get(user=chef)
+            if not cook_profile.is_active:
+                raise serializers.ValidationError("Chef is currently not accepting orders")
+        except Cook.DoesNotExist:
+            raise serializers.ValidationError("Chef profile not found")
+        
+        # Additional availability checks can be added here
+        return True
+    
+    def validate_order_timing(self):
+        """Validate order timing (e.g., not too late at night)"""
+        from django.utils import timezone
+        import datetime
+        
+        current_time = timezone.now().time()
+        # Example: No orders between 11 PM and 6 AM
+        if datetime.time(23, 0) <= current_time or current_time <= datetime.time(6, 0):
+            raise serializers.ValidationError("Orders are not accepted between 11 PM and 6 AM")
+        return True
+
+
+class DataIntegrityValidationMixin:
+    """Mixin for data integrity validations"""
+    
+    def validate_pricing_consistency(self, cart_items):
+        """Validate pricing is consistent and not tampered with"""
+        for item in cart_items:
+            # Check if price has changed since item was added to cart
+            current_price = item.price.price
+            if item.unit_price and item.unit_price != current_price:
+                raise serializers.ValidationError(
+                    f"Price for {item.price.food.name} has changed. Please refresh your cart."
+                )
+        return True
+    
+    def validate_minimum_order_amount(self, subtotal):
+        """Validate minimum order amount"""
+        MINIMUM_ORDER = 250.00  # Minimum order amount in LKR
+        if float(subtotal) < MINIMUM_ORDER:
+            raise serializers.ValidationError(
+                f"Minimum order amount is LKR {MINIMUM_ORDER}. Current subtotal: LKR {subtotal}"
+            )
+        return True
+    
+    def validate_maximum_order_amount(self, total_amount):
+        """Validate maximum order amount"""
+        MAXIMUM_ORDER = 50000.00  # Maximum order amount in LKR
+        if float(total_amount) > MAXIMUM_ORDER:
+            raise serializers.ValidationError(
+                f"Maximum order amount is LKR {MAXIMUM_ORDER}. Please contact support for large orders."
+            )
+        return True
+
+
 # Legacy serializers for backward compatibility
 class OrderSerializer(OrderDetailSerializer):
     """Legacy serializer - use OrderDetailSerializer instead"""

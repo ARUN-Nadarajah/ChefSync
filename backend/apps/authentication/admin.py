@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.db import models
 from django.utils.safestring import mark_safe
-from .models import User, Customer, Cook, DeliveryAgent
+from .models import User, Admin, Customer, Cook, DeliveryAgent, EmailOTP, JWTToken
 from django.apps import apps
 
 # Get models from Django's app registry to avoid import issues
@@ -181,3 +181,108 @@ class UserDocumentAdmin(admin.ModelAdmin):
             if not (obj.user.approval_status == 'pending' or obj.is_visible_to_admin):
                 return False
         return super().has_delete_permission(request, obj)
+
+
+@admin.register(Admin)
+class AdminAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for Admin model
+    """
+    list_display = ('admin_id', 'user_name', 'user_email', 'user_phone')
+    search_fields = ('user__name', 'user__email', 'user__phone_no')
+    ordering = ('admin_id',)
+    
+    def user_name(self, obj):
+        return obj.user.name
+    user_name.short_description = 'Name'
+    
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = 'Email'
+    
+    def user_phone(self, obj):
+        return obj.user.phone_no
+    user_phone.short_description = 'Phone'
+
+
+@admin.register(EmailOTP)
+class EmailOTPAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for EmailOTP model
+    """
+    list_display = ('email', 'purpose', 'otp', 'is_used', 'attempts', 'created_at', 'expires_at')
+    list_filter = ('purpose', 'is_used', 'created_at', 'expires_at')
+    search_fields = ('email', 'otp')
+    readonly_fields = ('otp', 'created_at', 'expires_at')
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
+    
+    actions = ['mark_as_used', 'regenerate_otp']
+    
+    def mark_as_used(self, request, queryset):
+        updated = queryset.update(is_used=True)
+        self.message_user(request, f'{updated} OTP(s) marked as used.')
+    mark_as_used.short_description = "Mark selected OTPs as used"
+    
+    def regenerate_otp(self, request, queryset):
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        for otp_obj in queryset:
+            otp_obj.otp = otp_obj.generate_otp()
+            otp_obj.expires_at = timezone.now() + timedelta(minutes=10)
+            otp_obj.is_used = False
+            otp_obj.attempts = 0
+            otp_obj.save()
+        
+        self.message_user(request, f'{queryset.count()} OTP(s) regenerated.')
+    regenerate_otp.short_description = "Regenerate selected OTPs"
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request)
+
+
+@admin.register(JWTToken)
+class JWTTokenAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for JWTToken model
+    """
+    list_display = ('user', 'token_type', 'is_revoked', 'is_blacklisted', 'issued_at', 'expires_at', 'last_used_at')
+    list_filter = ('token_type', 'is_revoked', 'is_blacklisted', 'issued_at', 'expires_at')
+    search_fields = ('user__name', 'user__email', 'jti', 'ip_address')
+    readonly_fields = ('token_hash', 'jti', 'issued_at', 'last_used_at', 'usage_count')
+    date_hierarchy = 'issued_at'
+    ordering = ['-issued_at']
+    
+    fieldsets = (
+        ('Token Info', {'fields': ('user', 'token_type', 'token_hash', 'jti')}),
+        ('Status', {'fields': ('is_revoked', 'is_blacklisted', 'revoked_at', 'blacklisted_at')}),
+        ('Timing', {'fields': ('issued_at', 'expires_at', 'last_used_at', 'usage_count')}),
+        ('Security', {'fields': ('ip_address', 'user_agent', 'device_info')}),
+        ('Referral Info', {'fields': ('max_uses', 'used_by', 'referrer_reward', 'referee_reward', 'campaign_name'), 'classes': ('collapse',)}),
+    )
+    
+    actions = ['revoke_tokens', 'blacklist_tokens', 'cleanup_expired']
+    
+    def revoke_tokens(self, request, queryset):
+        from django.utils import timezone
+        updated = queryset.update(is_revoked=True, revoked_at=timezone.now())
+        self.message_user(request, f'{updated} token(s) revoked.')
+    revoke_tokens.short_description = "Revoke selected tokens"
+    
+    def blacklist_tokens(self, request, queryset):
+        from django.utils import timezone
+        updated = queryset.update(is_blacklisted=True, blacklisted_at=timezone.now())
+        self.message_user(request, f'{updated} token(s) blacklisted.')
+    blacklist_tokens.short_description = "Blacklist selected tokens"
+    
+    def cleanup_expired(self, request, queryset):
+        from django.utils import timezone
+        expired_tokens = queryset.filter(expires_at__lt=timezone.now())
+        count = expired_tokens.count()
+        expired_tokens.delete()
+        self.message_user(request, f'{count} expired token(s) cleaned up.')
+    cleanup_expired.short_description = "Clean up expired tokens"
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'used_by')

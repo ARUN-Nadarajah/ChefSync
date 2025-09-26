@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
@@ -93,17 +93,55 @@ class ChefFoodViewSet(viewsets.ModelViewSet):
         return FoodSerializer
 
     def create(self, request, *args, **kwargs):
-        """Create new food item with initial price"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        food = serializer.save()
-        
-        # Return the created food with all details
-        response_serializer = FoodSerializer(food, context={'request': request})
-        return Response({
-            'message': 'New food submitted. Pending admin approval.',
-            'food': response_serializer.data
-        }, status=status.HTTP_201_CREATED)
+        """Create new food item with comprehensive validation"""
+        try:
+            # Validate user permissions
+            if not request.user.is_authenticated:
+                return Response({
+                    'error': 'Authentication required'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Check if user is a chef/cook
+            if not hasattr(request.user, 'cook') and not hasattr(request.user, 'chefprofile'):
+                return Response({
+                    'error': 'Only chefs can create food items'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Validate input data
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                return Response({
+                    'error': 'Validation failed',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create food item
+            food = serializer.save()
+            
+            # Return the created food with all details
+            response_serializer = FoodSerializer(food, context={'request': request})
+            return Response({
+                'message': 'New food submitted successfully. Pending admin approval.',
+                'food': response_serializer.data,
+                'validation_summary': {
+                    'name_validated': True,
+                    'price_validated': True,
+                    'image_validated': bool(food.image),
+                    'ingredients_count': len(food.ingredients) if food.ingredients else 0
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except serializers.ValidationError as e:
+            return Response({
+                'error': 'Validation failed',
+                'details': e.detail if hasattr(e, 'detail') else str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response({
+                'error': 'Failed to create food item',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def update(self, request, *args, **kwargs):
         """Update food item (chefs can only update availability)"""

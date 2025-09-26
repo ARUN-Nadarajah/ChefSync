@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    Communication,
+    Contact, Notification, Communication,
     CommunicationResponse,
     CommunicationAttachment,
     CommunicationTemplate,
@@ -9,6 +9,45 @@ from .models import (
     CommunicationCategoryRelation,
     CommunicationTagRelation
 )
+
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    list_display = ('contact_id', 'name', 'email', 'user', 'created_at')
+    list_filter = ('created_at', 'user')
+    search_fields = ('name', 'email', 'message', 'user__username', 'user__email')
+    readonly_fields = ('contact_id', 'created_at')
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('notification_id', 'subject', 'user', 'status', 'time')
+    list_filter = ('status', 'time')
+    search_fields = ('subject', 'message', 'user__username', 'user__email')
+    readonly_fields = ('notification_id', 'time')
+    list_editable = ('status',)
+    date_hierarchy = 'time'
+    ordering = ['-time']
+    
+    actions = ['mark_as_read', 'mark_as_unread']
+    
+    def mark_as_read(self, request, queryset):
+        updated = queryset.update(status='Read')
+        self.message_user(request, f'{updated} notification(s) marked as read.')
+    mark_as_read.short_description = "Mark selected notifications as read"
+    
+    def mark_as_unread(self, request, queryset):
+        updated = queryset.update(status='Unread')
+        self.message_user(request, f'{updated} notification(s) marked as unread.')
+    mark_as_unread.short_description = "Mark selected notifications as unread"
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
 
 @admin.register(Communication)
 class CommunicationAdmin(admin.ModelAdmin):
