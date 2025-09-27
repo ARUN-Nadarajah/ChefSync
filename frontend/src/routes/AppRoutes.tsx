@@ -47,12 +47,11 @@ import DeliveryProfile from "@/pages/delivery/Profile";
 import AllOrders from "@/pages/delivery/AllOrders";
 import PickupNavigationDemo from "@/pages/demo/PickupNavigationDemo";
 
-import CookDashboard from "@/pages/cook/Dashboard";
-import CookBulkOrders from "@/pages/cook/BulkOrders";
-import CookHome from "@/pages/cook/Home";
-import CookMenu from "@/pages/cook/MenuNew";
-import CookOrders from "@/pages/cook/Order";
-import CookNotifications from "@/pages/cook/Notifications";
+import CookDashboard from '@/pages/cook/Dashboard';
+import CookBulkOrders from '@/pages/cook/BulkOrders';
+import CookMenu from '@/pages/cook/MenuNew';
+import CookOrders from '@/pages/cook/Order';
+import CookNotifications from '@/pages/cook/Notifications';
 import CookProfile from "@/pages/cook/Profile";
 import CookSettings from "@/pages/cook/Settings";
 import CookLayout from "@/components/layout/CookLayout";
@@ -445,18 +444,14 @@ const InnerRoutes: React.FC = () => {
         />
 
         {/* Cook Routes */}
-        <Route
-          path="/cook"
-          element={
-            <ProtectedRoute allowedRoles={["cook"]}>
-              <CookLayout />
-            </ProtectedRoute>
-          }
-        >
+        <Route path="/cook" element={
+          <ProtectedRoute allowedRoles={['cook']}>
+            <CookLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<CookDashboard />} />
           <Route path="bulk-orders" element={<CookBulkOrders />} />
-          <Route path="home" element={<CookHome />} />
           <Route path="menu" element={<CookMenu />} />
           <Route path="orders" element={<CookOrders />} />
           <Route path="notifications" element={<CookNotifications />} />

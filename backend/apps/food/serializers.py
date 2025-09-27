@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Cuisine, FoodCategory, Food, FoodReview, FoodPrice, Offer
+from django.db import models
+from .models import Cuisine, FoodCategory, Food, FoodReview, FoodPrice, Offer, FoodImage
 from utils.cloudinary_utils import get_optimized_url, upload_image_to_cloudinary
 import base64
 import uuid
@@ -105,6 +106,47 @@ class FoodSerializer(serializers.ModelSerializer):
     prices = FoodPriceSerializer(many=True, read_only=True)
     image_url = serializers.SerializerMethodField()
     optimized_image_url = serializers.SerializerMethodField()
+    
+    # Dynamic fields for real data from database
+    rating_average = serializers.SerializerMethodField()
+    total_reviews = serializers.SerializerMethodField()
+    total_orders = serializers.SerializerMethodField()
+    
+    def get_rating_average(self, obj):
+        """Calculate average rating from all reviews for this food item"""
+        from django.db.models import Avg
+        # Get all food prices for this food item, then get reviews for those prices
+        food_prices = obj.prices.all()
+        if not food_prices.exists():
+            return 0.0
+        
+        # Get all reviews for this food's prices
+        reviews = FoodReview.objects.filter(price__in=food_prices)
+        avg_rating = reviews.aggregate(avg=Avg('rating'))['avg']
+        return round(float(avg_rating), 2) if avg_rating else 0.0
+    
+    def get_total_reviews(self, obj):
+        """Count total reviews for this food item"""
+        # Get all food prices for this food item, then count reviews for those prices
+        food_prices = obj.prices.all()
+        if not food_prices.exists():
+            return 0
+        
+        return FoodReview.objects.filter(price__in=food_prices).count()
+    
+    def get_total_orders(self, obj):
+        """Count total orders for this food item"""
+        from apps.orders.models import OrderItem
+        # Get all food prices for this food item, then count order items for those prices
+        food_prices = obj.prices.all()
+        if not food_prices.exists():
+            return 0
+        
+        # Sum up all quantities of order items for this food's prices
+        total_quantity = OrderItem.objects.filter(price__in=food_prices).aggregate(
+            total=models.Sum('quantity')
+        )['total']
+        return total_quantity or 0
     
     class Meta:
         model = Food

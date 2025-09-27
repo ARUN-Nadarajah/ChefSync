@@ -24,4 +24,7 @@ urlpatterns = [
     # Checkout and order placement endpoints
     path('checkout/calculate/', views.calculate_checkout, name='calculate-checkout'),
     path('place/', views.place_order, name='place-order'),
+    
+    # Admin notifications endpoint
+    path('admin/notifications/', views.admin_notifications, name='admin-notifications'),
 ]
