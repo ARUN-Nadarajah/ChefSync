@@ -35,123 +35,30 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 
 ## 📸 Platform Screenshots
 
-> **Beautiful, Intuitive Interface for Every User Role**
-
----
-
 ### 🏠 **Customer Experience**
 
 <div align="center">
 
-<table>
-<tr>
-<td width="50%">
+### Home Page
+<img src="./photos/home.png" alt="Home Page" width="90%"/>
 
-#### 🌟 Home Page
-<img src="./photos/home.png" alt="Home Page" width="100%"/>
+### Menu & Food Selection
+<img src="./photos/menu.png" alt="Menu Selection" width="90%"/>
 
-**Discover Local Chefs**
-- Featured home chefs in your area
-- Cuisine filters and search
-- Real-time availability status
-- Top-rated meals showcase
+### Location Selection
+<img src="./photos/location.png" alt="Location Setup" width="90%"/>
 
-</td>
-<td width="50%">
+### AI-Powered Food Details
+<img src="./photos/ai expain foods details.png" alt="AI Food Explanation" width="90%"/>
 
-#### 🍽️ Menu & Food Selection
-<img src="./photos/menu.png" alt="Menu Selection" width="100%"/>
+### Menu with Pricing
+<img src="./photos/menu food price.png" alt="Menu Pricing" width="90%"/>
 
-**Explore Delicious Options**
-- Detailed food descriptions
-- High-quality food images
-- Price and preparation time
-- Add to cart with customization
+### Order Process & Checkout
+<img src="./photos/order process.png" alt="Order Process" width="90%"/>
 
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-
-#### 📍 Location Selection & Setup
-<img src="./photos/location.png" alt="Location Setup" width="100%"/>
-
-**Smart Delivery Setup**
-- Google Maps integration
-- Multiple saved addresses
-- GPS auto-detection
-- Delivery radius validation
-
-</td>
-<td width="50%">
-
-#### 🤖 AI-Powered Food Details
-<img src="./photos/ai expain foods details.png" alt="AI Food Explanation" width="100%"/>
-
-**Intelligent Food Information**
-- Detailed food explanations
-- Nutritional information
-- Recipe insights
-- AI-powered recommendations
-
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-
-#### 💰 Menu with Pricing
-<img src="./photos/menu food price.png" alt="Menu Pricing" width="100%"/>
-
-**Clear Pricing Information**
-- Transparent pricing display
-- Food item details
-- Chef information
-- Easy cart management
-
-</td>
-<td width="50%">
-
-#### 🛒 Order Process & Checkout
-<img src="./photos/order process.png" alt="Order Process" width="100%"/>
-
-**Seamless Order Experience**
-- Shopping cart management
-- Order summary & totals
-- Payment options (COD)
-- Order confirmation
-
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-
-#### 📦 Real-Time Order Tracking
-<img src="./photos/order tracking.png" alt="Order Tracking" width="100%"/>
-
-**Track Every Step**
-- Live status updates
-- Estimated delivery time
-- Delivery agent location
-- Direct contact options
-
-</td>
-<td width="50%">
-
-#### 💬 Admin AI Chat & Analytics
-<img src="./photos/admin analytics and ai chat box.png" alt="AI Chat Assistant" width="100%"/>
-
-**Intelligent Platform Assistant**
-- AI-powered support chat
-- Real-time analytics
-- Smart recommendations
-- Instant customer service
-
-</td>
-</tr>
-</table>
+### Real-Time Order Tracking
+<img src="./photos/order tracking.png" alt="Order Tracking" width="90%"/>
 
 </div>
 
@@ -161,61 +68,17 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 
 <div align="center">
 
-<table>
-<tr>
-<td width="50%">
+### Chef - Kitchen Dashboard
+<img src="./photos/chef dashboard.png" alt="Chef Dashboard" width="90%"/>
 
-#### 🏪 Chef - Kitchen Dashboard
-<img src="./photos/chef dashboard.png" alt="Chef Dashboard" width="100%"/>
+### Chef - Menu Management
+<img src="./photos/chef menu management.png" alt="Chef Menu Management" width="90%"/>
 
-**Complete Kitchen Control**
-- Real-time order notifications
-- Order queue management
-- Preparation time tracking
-- Daily earnings overview
+### Chef - Order Management
+<img src="./photos/chef order management.png" alt="Chef Order Management" width="90%"/>
 
-</td>
-<td width="50%">
-
-#### 📋 Chef - Menu Management
-<img src="./photos/chef menu management.png" alt="Chef Menu Management" width="100%"/>
-
-**Manage Your Offerings**
-- Add/edit menu items
-- Bulk menu upload
-- Image gallery management
-- Availability toggle
-
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-
-#### 📦 Chef - Order Management
-<img src="./photos/chef order management.png" alt="Chef Order Management" width="100%"/>
-
-**Efficient Order Handling**
-- View incoming orders
-- Accept/reject orders
-- Order details view
-- Order history access
-
-</td>
-<td width="50%">
-
-#### 🔔 Chef - Order Status Updates
-<img src="./photos/chef  order satatus update.png" alt="Chef Order Status" width="100%"/>
-
-**Real-Time Status Control**
-- Update preparation status
-- Mark orders ready
-- Notify customers
-- Track order progress
-
-</td>
-</tr>
-</table>
+### Chef - Order Status Updates
+<img src="./photos/chef  order satatus update.png" alt="Chef Order Status" width="90%"/>
 
 </div>
 
@@ -225,61 +88,17 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 
 <div align="center">
 
-<table>
-<tr>
-<td width="50%">
+### Delivery - Agent Dashboard
+<img src="./photos/delevery agent dashboard.png" alt="Delivery Dashboard" width="90%"/>
 
-#### 📦 Delivery - Agent Dashboard
-<img src="./photos/delevery agent dashboard.png" alt="Delivery Dashboard" width="100%"/>
+### Delivery - Map Indication
+<img src="./photos/delevery agent map indicration.png" alt="Delivery Map Indication" width="90%"/>
 
-**Order Management Hub**
-- Available orders list
-- Accept/decline orders
-- Current delivery status
-- Earnings tracking
+### Delivery - Navigation Route
+<img src="./photos/delevery agent map route.png" alt="Delivery Route Navigation" width="90%"/>
 
-</td>
-<td width="50%">
-
-#### 🗺️ Delivery - Map Indication
-<img src="./photos/delevery agent map indicration.png" alt="Delivery Map Indication" width="100%"/>
-
-**Location Visualization**
-- Chef pickup location
-- Customer delivery location
-- Distance calculation
-- Route preview
-
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-
-#### 📍 Delivery - Navigation Route
-<img src="./photos/delevery agent map route.png" alt="Delivery Route Navigation" width="100%"/>
-
-**Smart Route Planning**
-- Google Maps integration
-- Turn-by-turn directions
-- Real-time traffic updates
-- Optimal route selection
-
-</td>
-<td width="50%">
-
-#### 💰 Delivery - Past Deliveries
-<img src="./photos/past deleveryies.png" alt="Past Deliveries" width="100%"/>
-
-**Earnings & History**
-- Completed deliveries
-- Earnings summary
-- Performance metrics
-- Payment history
-
-</td>
-</tr>
-</table>
+### Delivery - Past Deliveries
+<img src="./photos/past deleveryies.png" alt="Past Deliveries" width="90%"/>
 
 </div>
 
@@ -289,61 +108,17 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 
 <div align="center">
 
-<table>
-<tr>
-<td width="50%">
+### Admin - Dashboard Overview
+<img src="./photos/admin dashboard.png" alt="Admin Dashboard" width="90%"/>
 
-#### 🎯 Admin - Dashboard Overview
-<img src="./photos/admin dashboard.png" alt="Admin Dashboard" width="100%"/>
+### Admin - User Management
+<img src="./photos/admin user management.png" alt="Admin User Management" width="90%"/>
 
-**Platform-Wide Insights**
-- Total users & orders
-- Revenue analytics
-- Real-time activity feed
-- System health monitoring
+### Admin - Analytics & AI Chat
+<img src="./photos/admin analytics and ai chat box.png" alt="Admin Analytics" width="90%"/>
 
-</td>
-<td width="50%">
-
-#### ✅ Admin - User Management
-<img src="./photos/admin user management.png" alt="Admin User Management" width="100%"/>
-
-**Approve & Manage Users**
-- Chef application reviews
-- Delivery agent verification
-- Document approval system
-- User status management
-
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-
-#### 📊 Admin - Analytics & AI Chat
-<img src="./photos/admin analytics and ai chat box.png" alt="Admin Analytics" width="100%"/>
-
-**Data-Driven Decisions**
-- Order trends analysis
-- Revenue reports
-- User growth metrics
-- AI-powered insights
-
-</td>
-<td width="50%">
-
-#### 🛡️ Admin - Content Management
-<img src="./photos/admin content management.png" alt="Admin Content Management" width="100%"/>
-
-**Platform Content Control**
-- Menu oversight
-- Content moderation
-- Category management
-- Quality assurance
-
-</td>
-</tr>
-</table>
+### Admin - Content Management
+<img src="./photos/admin content management.png" alt="Admin Content Management" width="90%"/>
 
 </div>
 
