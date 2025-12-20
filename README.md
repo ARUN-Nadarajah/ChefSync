@@ -33,6 +33,307 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 
 ---
 
+## 📸 Platform Screenshots
+
+> **Beautiful, Intuitive Interface for Every User Role**
+
+---
+
+### 🏠 **Customer Experience**
+
+<div align="center">
+
+<table>
+<tr>
+<td width="50%">
+
+#### 🌟 Home Page
+![Home Page](https://via.placeholder.com/800x500/4F46E5/FFFFFF?text=Home+Page+-+Browse+Chefs)
+
+**Discover Local Chefs**
+- Featured home chefs in your area
+- Cuisine filters and search
+- Real-time availability status
+- Top-rated meals showcase
+
+</td>
+<td width="50%">
+
+#### 🍽️ Menu & Food Selection
+![Menu Selection](https://via.placeholder.com/800x500/10B981/FFFFFF?text=Menu+%26+Food+Items)
+
+**Explore Delicious Options**
+- Detailed food descriptions
+- High-quality food images
+- Price and preparation time
+- Add to cart with customization
+
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+
+#### 📍 Location Selection & Setup
+![Location Setup](https://via.placeholder.com/800x500/F59E0B/FFFFFF?text=Location+Selection)
+
+**Smart Delivery Setup**
+- Google Maps integration
+- Multiple saved addresses
+- GPS auto-detection
+- Delivery radius validation
+
+</td>
+<td width="50%">
+
+#### 🤖 AI-Powered Assistant
+![AI Assistant](https://via.placeholder.com/800x500/8B5CF6/FFFFFF?text=AI+Chat+Assistant)
+
+**Intelligent Food Recommendations**
+- Personalized suggestions
+- Recipe information
+- Dietary preferences
+- Instant customer support
+
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+
+#### 🛒 Order Process & Checkout
+![Order Process](https://via.placeholder.com/800x500/EC4899/FFFFFF?text=Order+%26+Checkout)
+
+**Seamless Order Experience**
+- Shopping cart management
+- Order summary & totals
+- Payment options (COD)
+- Order confirmation
+
+</td>
+<td width="50%">
+
+#### 📦 Real-Time Order Tracking
+![Order Tracking](https://via.placeholder.com/800x500/06B6D4/FFFFFF?text=Live+Order+Tracking)
+
+**Track Every Step**
+- Live status updates
+- Estimated delivery time
+- Delivery agent location
+- Direct contact options
+
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
+### 👨‍🍳 **Chef Dashboard**
+
+<div align="center">
+
+<table>
+<tr>
+<td width="50%">
+
+#### 🏪 Chef - Kitchen Management
+![Chef Dashboard](https://via.placeholder.com/800x500/EF4444/FFFFFF?text=Chef+Dashboard)
+
+**Complete Kitchen Control**
+- Real-time order notifications
+- Order queue management
+- Preparation time tracking
+- Daily earnings overview
+
+</td>
+<td width="50%">
+
+#### 📋 Chef - Menu Management
+![Chef Menu](https://via.placeholder.com/800x500/F97316/FFFFFF?text=Chef+Menu+Management)
+
+**Manage Your Offerings**
+- Add/edit menu items
+- Bulk menu upload
+- Image gallery management
+- Availability toggle
+
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+
+#### 📊 Chef - Earnings & Analytics
+![Chef Analytics](https://via.placeholder.com/800x500/DC2626/FFFFFF?text=Chef+Earnings+%26+Stats)
+
+**Track Your Success**
+- Revenue tracking
+- Order statistics
+- Popular items analysis
+- Customer ratings & reviews
+
+</td>
+<td width="50%">
+
+#### 🔔 Chef - Order Processing
+![Chef Orders](https://via.placeholder.com/800x500/EA580C/FFFFFF?text=Chef+Order+Processing)
+
+**Efficient Order Handling**
+- Accept/reject orders
+- Update preparation status
+- Mark orders ready
+- Order history access
+
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
+### 🚚 **Delivery Agent Dashboard**
+
+<div align="center">
+
+<table>
+<tr>
+<td width="50%">
+
+#### 📦 Delivery - Active Orders
+![Delivery Dashboard](https://via.placeholder.com/800x500/14B8A6/FFFFFF?text=Delivery+Dashboard)
+
+**Order Management Hub**
+- Available orders list
+- Accept/decline orders
+- Current delivery status
+- Earnings tracking
+
+</td>
+<td width="50%">
+
+#### 🗺️ Delivery - Navigation System
+![Delivery Navigation](https://via.placeholder.com/800x500/0D9488/FFFFFF?text=Delivery+Navigation)
+
+**Smart Route Planning**
+- Google Maps integration
+- Pickup location routing
+- Customer delivery address
+- Real-time traffic updates
+
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+
+#### 📍 Delivery - Location Tracking
+![Delivery Tracking](https://via.placeholder.com/800x500/06B6D4/FFFFFF?text=Delivery+Location+Tracking)
+
+**Precise Delivery Updates**
+- GPS location sharing
+- Route optimization
+- ETA calculations
+- Direct contact with chef/customer
+
+</td>
+<td width="50%">
+
+#### 💰 Delivery - Earnings Dashboard
+![Delivery Earnings](https://via.placeholder.com/800x500/0891B2/FFFFFF?text=Delivery+Earnings)
+
+**Track Your Income**
+- Daily earnings summary
+- Completed deliveries count
+- Distance traveled stats
+- Payment history
+
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
+### 🔧 **Admin Panel**
+
+<div align="center">
+
+<table>
+<tr>
+<td width="50%">
+
+#### 🎯 Admin - Dashboard Overview
+![Admin Dashboard](https://via.placeholder.com/800x500/6366F1/FFFFFF?text=Admin+Dashboard)
+
+**Platform-Wide Insights**
+- Total users & orders
+- Revenue analytics
+- Real-time activity feed
+- System health monitoring
+
+</td>
+<td width="50%">
+
+#### ✅ Admin - User Management
+![Admin Users](https://via.placeholder.com/800x500/4F46E5/FFFFFF?text=Admin+User+Management)
+
+**Approve & Manage Users**
+- Chef application reviews
+- Delivery agent verification
+- Document approval system
+- User status management
+
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+
+#### 📊 Admin - Analytics & Reports
+![Admin Analytics](https://via.placeholder.com/800x500/7C3AED/FFFFFF?text=Admin+Analytics)
+
+**Data-Driven Decisions**
+- Order trends analysis
+- Revenue reports
+- User growth metrics
+- AI-generated insights
+
+</td>
+<td width="50%">
+
+#### 🛡️ Admin - Platform Control
+![Admin Control](https://via.placeholder.com/800x500/5B21B6/FFFFFF?text=Admin+Platform+Control)
+
+**Complete Platform Management**
+- Order oversight
+- Payment monitoring
+- User support tickets
+- System configuration
+
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
+<div align="center">
+
+### 🎨 **Modern, Responsive Design**
+
+Our platform features a beautiful, intuitive interface built with **React** and **Tailwind CSS**, ensuring a seamless experience across all devices - desktop, tablet, and mobile.
+
+**[Replace these placeholder images with your actual screenshots to showcase the full beauty of ChefSync!]**
+
+</div>
+
+---
+
 ## ✨ Key Features
 
 ### 👥 For Customers
