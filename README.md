@@ -48,7 +48,7 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <td width="50%">
 
 #### 🌟 Home Page
-![Home Page](https://via.placeholder.com/800x500/4F46E5/FFFFFF?text=Home+Page+-+Browse+Chefs)
+<img src="./photos/home.png" alt="Home Page" width="100%"/>
 
 **Discover Local Chefs**
 - Featured home chefs in your area
@@ -60,7 +60,7 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <td width="50%">
 
 #### 🍽️ Menu & Food Selection
-![Menu Selection](https://via.placeholder.com/800x500/10B981/FFFFFF?text=Menu+%26+Food+Items)
+<img src="./photos/menu.png" alt="Menu Selection" width="100%"/>
 
 **Explore Delicious Options**
 - Detailed food descriptions
@@ -75,7 +75,7 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <td width="50%">
 
 #### 📍 Location Selection & Setup
-![Location Setup](https://via.placeholder.com/800x500/F59E0B/FFFFFF?text=Location+Selection)
+<img src="./photos/location.png" alt="Location Setup" width="100%"/>
 
 **Smart Delivery Setup**
 - Google Maps integration
@@ -86,14 +86,14 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 </td>
 <td width="50%">
 
-#### 🤖 AI-Powered Assistant
-![AI Assistant](https://via.placeholder.com/800x500/8B5CF6/FFFFFF?text=AI+Chat+Assistant)
+#### 🤖 AI-Powered Food Details
+<img src="./photos/ai expain foods details.png" alt="AI Food Explanation" width="100%"/>
 
-**Intelligent Food Recommendations**
-- Personalized suggestions
-- Recipe information
-- Dietary preferences
-- Instant customer support
+**Intelligent Food Information**
+- Detailed food explanations
+- Nutritional information
+- Recipe insights
+- AI-powered recommendations
 
 </td>
 </tr>
@@ -101,8 +101,20 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <tr>
 <td width="50%">
 
+#### 💰 Menu with Pricing
+<img src="./photos/menu food price.png" alt="Menu Pricing" width="100%"/>
+
+**Clear Pricing Information**
+- Transparent pricing display
+- Food item details
+- Chef information
+- Easy cart management
+
+</td>
+<td width="50%">
+
 #### 🛒 Order Process & Checkout
-![Order Process](https://via.placeholder.com/800x500/EC4899/FFFFFF?text=Order+%26+Checkout)
+<img src="./photos/order process.png" alt="Order Process" width="100%"/>
 
 **Seamless Order Experience**
 - Shopping cart management
@@ -111,16 +123,31 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 - Order confirmation
 
 </td>
+</tr>
+
+<tr>
 <td width="50%">
 
 #### 📦 Real-Time Order Tracking
-![Order Tracking](https://via.placeholder.com/800x500/06B6D4/FFFFFF?text=Live+Order+Tracking)
+<img src="./photos/order tracking.png" alt="Order Tracking" width="100%"/>
 
 **Track Every Step**
 - Live status updates
 - Estimated delivery time
 - Delivery agent location
 - Direct contact options
+
+</td>
+<td width="50%">
+
+#### 💬 Admin AI Chat & Analytics
+<img src="./photos/admin analytics and ai chat box.png" alt="AI Chat Assistant" width="100%"/>
+
+**Intelligent Platform Assistant**
+- AI-powered support chat
+- Real-time analytics
+- Smart recommendations
+- Instant customer service
 
 </td>
 </tr>
@@ -138,8 +165,8 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <tr>
 <td width="50%">
 
-#### 🏪 Chef - Kitchen Management
-![Chef Dashboard](https://via.placeholder.com/800x500/EF4444/FFFFFF?text=Chef+Dashboard)
+#### 🏪 Chef - Kitchen Dashboard
+<img src="./photos/chef dashboard.png" alt="Chef Dashboard" width="100%"/>
 
 **Complete Kitchen Control**
 - Real-time order notifications
@@ -151,7 +178,7 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <td width="50%">
 
 #### 📋 Chef - Menu Management
-![Chef Menu](https://via.placeholder.com/800x500/F97316/FFFFFF?text=Chef+Menu+Management)
+<img src="./photos/chef menu management.png" alt="Chef Menu Management" width="100%"/>
 
 **Manage Your Offerings**
 - Add/edit menu items
@@ -165,26 +192,26 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <tr>
 <td width="50%">
 
-#### 📊 Chef - Earnings & Analytics
-![Chef Analytics](https://via.placeholder.com/800x500/DC2626/FFFFFF?text=Chef+Earnings+%26+Stats)
+#### 📦 Chef - Order Management
+<img src="./photos/chef order management.png" alt="Chef Order Management" width="100%"/>
 
-**Track Your Success**
-- Revenue tracking
-- Order statistics
-- Popular items analysis
-- Customer ratings & reviews
+**Efficient Order Handling**
+- View incoming orders
+- Accept/reject orders
+- Order details view
+- Order history access
 
 </td>
 <td width="50%">
 
-#### 🔔 Chef - Order Processing
-![Chef Orders](https://via.placeholder.com/800x500/EA580C/FFFFFF?text=Chef+Order+Processing)
+#### 🔔 Chef - Order Status Updates
+<img src="./photos/chef  order satatus update.png" alt="Chef Order Status" width="100%"/>
 
-**Efficient Order Handling**
-- Accept/reject orders
+**Real-Time Status Control**
 - Update preparation status
 - Mark orders ready
-- Order history access
+- Notify customers
+- Track order progress
 
 </td>
 </tr>
@@ -202,8 +229,8 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <tr>
 <td width="50%">
 
-#### 📦 Delivery - Active Orders
-![Delivery Dashboard](https://via.placeholder.com/800x500/14B8A6/FFFFFF?text=Delivery+Dashboard)
+#### 📦 Delivery - Agent Dashboard
+<img src="./photos/delevery agent dashboard.png" alt="Delivery Dashboard" width="100%"/>
 
 **Order Management Hub**
 - Available orders list
@@ -214,14 +241,14 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 </td>
 <td width="50%">
 
-#### 🗺️ Delivery - Navigation System
-![Delivery Navigation](https://via.placeholder.com/800x500/0D9488/FFFFFF?text=Delivery+Navigation)
+#### 🗺️ Delivery - Map Indication
+<img src="./photos/delevery agent map indicration.png" alt="Delivery Map Indication" width="100%"/>
 
-**Smart Route Planning**
-- Google Maps integration
-- Pickup location routing
-- Customer delivery address
-- Real-time traffic updates
+**Location Visualization**
+- Chef pickup location
+- Customer delivery location
+- Distance calculation
+- Route preview
 
 </td>
 </tr>
@@ -229,25 +256,25 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <tr>
 <td width="50%">
 
-#### 📍 Delivery - Location Tracking
-![Delivery Tracking](https://via.placeholder.com/800x500/06B6D4/FFFFFF?text=Delivery+Location+Tracking)
+#### 📍 Delivery - Navigation Route
+<img src="./photos/delevery agent map route.png" alt="Delivery Route Navigation" width="100%"/>
 
-**Precise Delivery Updates**
-- GPS location sharing
-- Route optimization
-- ETA calculations
-- Direct contact with chef/customer
+**Smart Route Planning**
+- Google Maps integration
+- Turn-by-turn directions
+- Real-time traffic updates
+- Optimal route selection
 
 </td>
 <td width="50%">
 
-#### 💰 Delivery - Earnings Dashboard
-![Delivery Earnings](https://via.placeholder.com/800x500/0891B2/FFFFFF?text=Delivery+Earnings)
+#### 💰 Delivery - Past Deliveries
+<img src="./photos/past deleveryies.png" alt="Past Deliveries" width="100%"/>
 
-**Track Your Income**
-- Daily earnings summary
-- Completed deliveries count
-- Distance traveled stats
+**Earnings & History**
+- Completed deliveries
+- Earnings summary
+- Performance metrics
 - Payment history
 
 </td>
@@ -267,7 +294,7 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <td width="50%">
 
 #### 🎯 Admin - Dashboard Overview
-![Admin Dashboard](https://via.placeholder.com/800x500/6366F1/FFFFFF?text=Admin+Dashboard)
+<img src="./photos/admin dashboard.png" alt="Admin Dashboard" width="100%"/>
 
 **Platform-Wide Insights**
 - Total users & orders
@@ -279,7 +306,7 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <td width="50%">
 
 #### ✅ Admin - User Management
-![Admin Users](https://via.placeholder.com/800x500/4F46E5/FFFFFF?text=Admin+User+Management)
+<img src="./photos/admin user management.png" alt="Admin User Management" width="100%"/>
 
 **Approve & Manage Users**
 - Chef application reviews
@@ -293,26 +320,26 @@ ChefSync is a comprehensive food delivery ecosystem that enables home chefs to m
 <tr>
 <td width="50%">
 
-#### 📊 Admin - Analytics & Reports
-![Admin Analytics](https://via.placeholder.com/800x500/7C3AED/FFFFFF?text=Admin+Analytics)
+#### 📊 Admin - Analytics & AI Chat
+<img src="./photos/admin analytics and ai chat box.png" alt="Admin Analytics" width="100%"/>
 
 **Data-Driven Decisions**
 - Order trends analysis
 - Revenue reports
 - User growth metrics
-- AI-generated insights
+- AI-powered insights
 
 </td>
 <td width="50%">
 
-#### 🛡️ Admin - Platform Control
-![Admin Control](https://via.placeholder.com/800x500/5B21B6/FFFFFF?text=Admin+Platform+Control)
+#### 🛡️ Admin - Content Management
+<img src="./photos/admin content management.png" alt="Admin Content Management" width="100%"/>
 
-**Complete Platform Management**
-- Order oversight
-- Payment monitoring
-- User support tickets
-- System configuration
+**Platform Content Control**
+- Menu oversight
+- Content moderation
+- Category management
+- Quality assurance
 
 </td>
 </tr>
